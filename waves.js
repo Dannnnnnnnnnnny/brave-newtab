@@ -77,31 +77,35 @@ function createNoise2D() {
   };
 }
 
-// --- Waves rendered to canvas, shown through clock text ---
+// --- Waves rendered natively in canvas with text composite mask ---
 
 (function () {
-  const container = document.getElementById('waves-bg');
+  const X_GAP = 8;
+  const Y_GAP = 8;
+
   const clockEl = document.getElementById('clock');
-  if (!container || !clockEl) return;
+  const container = document.getElementById('clock-container');
+  if (!clockEl || !container) return;
 
   const canvas = document.createElement('canvas');
+  canvas.className = 'waves-canvas';
   const ctx = canvas.getContext('2d');
-  canvas.style.display = 'none';
   container.appendChild(canvas);
 
   const noise = createNoise2D();
-  const X_GAP = 8;
-  const Y_GAP = 8;
   let vLines = [];
   let hLines = [];
   let cW = 0;
   let cH = 0;
+  let dpr = window.devicePixelRatio || 1;
   let waveMode = localStorage.getItem('newtab_wave_mode') || 'vertical';
 
   window.setWaveMode = function (mode) {
     waveMode = mode;
   };
-  let dpr = window.devicePixelRatio || 1;
+
+  // cache font string
+  let fontStr = '';
 
   const mouse = {
     x: -10, y: 0,
@@ -112,22 +116,31 @@ function createNoise2D() {
   };
 
   function setSize() {
-    // size canvas to full viewport for the wave field
-    cW = window.innerWidth;
-    cH = window.innerHeight;
-    canvas.width = cW * dpr;
-    canvas.height = cH * dpr;
-    ctx.scale(dpr, dpr);
+    const rect = container.getBoundingClientRect();
+    cW = rect.width;
+    cH = rect.height;
+    // add padding so text doesn't clip
+    canvas.width = (cW + 40) * dpr;
+    canvas.height = (cH + 20) * dpr;
+    canvas.style.width = (cW + 40) + 'px';
+    canvas.style.height = (cH + 20) + 'px';
+    canvas.style.left = '-20px';
+    canvas.style.top = '-10px';
+
+    fontStr = '200 ' + (9 * 16) + 'px "LT Institute", sans-serif';
   }
 
   function setLines() {
     vLines = [];
     hLines = [];
+
+    // wave field covers full viewport for mouse coherence
+    const vW = window.innerWidth;
+    const vH = window.innerHeight;
     const pad = 100;
 
-    // vertical lines (points stacked top to bottom)
-    const totalVLines = Math.ceil((cW + pad * 2) / X_GAP);
-    const totalVPoints = Math.ceil((cH + pad * 2) / Y_GAP);
+    const totalVLines = Math.ceil((vW + pad * 2) / X_GAP);
+    const totalVPoints = Math.ceil((vH + pad * 2) / Y_GAP);
 
     for (let i = 0; i < totalVLines; i++) {
       const points = [];
@@ -135,16 +148,15 @@ function createNoise2D() {
         points.push({
           x: -pad + X_GAP * i,
           y: -pad + Y_GAP * j,
-          wave: { x: 0, y: 0 },
-          cursor: { x: 0, y: 0, vx: 0, vy: 0 },
+          wx: 0, wy: 0,
+          cx: 0, cy: 0, cvx: 0, cvy: 0,
         });
       }
       vLines.push(points);
     }
 
-    // horizontal lines (points laid out left to right)
-    const totalHLines = Math.ceil((cH + pad * 2) / Y_GAP);
-    const totalHPoints = Math.ceil((cW + pad * 2) / X_GAP);
+    const totalHLines = Math.ceil((vH + pad * 2) / Y_GAP);
+    const totalHPoints = Math.ceil((vW + pad * 2) / X_GAP);
 
     for (let i = 0; i < totalHLines; i++) {
       const points = [];
@@ -152,8 +164,8 @@ function createNoise2D() {
         points.push({
           x: -pad + X_GAP * j,
           y: -pad + Y_GAP * i,
-          wave: { x: 0, y: 0 },
-          cursor: { x: 0, y: 0, vx: 0, vy: 0 },
+          wx: 0, wy: 0,
+          cx: 0, cy: 0, cvx: 0, cvy: 0,
         });
       }
       hLines.push(points);
@@ -171,8 +183,8 @@ function createNoise2D() {
           (p.y + time * 0.003) * 0.002
         ) * 8;
 
-        p.wave.x = Math.cos(move) * 12;
-        p.wave.y = Math.sin(move) * 6;
+        p.wx = Math.cos(move) * 12;
+        p.wy = Math.sin(move) * 6;
 
         const dx = p.x - mouse.sx;
         const dy = p.y - mouse.sy;
@@ -182,62 +194,46 @@ function createNoise2D() {
         if (d < l) {
           const s = 1 - d / l;
           const f = Math.cos(d * 0.001) * s;
-          p.cursor.vx += Math.cos(mouse.a) * f * l * mouse.vs * 0.00035;
-          p.cursor.vy += Math.sin(mouse.a) * f * l * mouse.vs * 0.00035;
+          p.cvx += Math.cos(mouse.a) * f * l * mouse.vs * 0.00035;
+          p.cvy += Math.sin(mouse.a) * f * l * mouse.vs * 0.00035;
         }
 
-        p.cursor.vx += -p.cursor.x * 0.01;
-        p.cursor.vy += -p.cursor.y * 0.01;
-        p.cursor.vx *= 0.95;
-        p.cursor.vy *= 0.95;
-        p.cursor.x += p.cursor.vx;
-        p.cursor.y += p.cursor.vy;
-        p.cursor.x = Math.min(50, Math.max(-50, p.cursor.x));
-        p.cursor.y = Math.min(50, Math.max(-50, p.cursor.y));
+        p.cvx += -p.cx * 0.01;
+        p.cvy += -p.cy * 0.01;
+        p.cvx *= 0.95;
+        p.cvy *= 0.95;
+        p.cx += p.cvx;
+        p.cy += p.cvy;
+        p.cx = Math.min(50, Math.max(-50, p.cx));
+        p.cy = Math.min(50, Math.max(-50, p.cy));
       }
     }
   }
 
-  function drawLinesToCanvas(allLines) {
+  function drawLines(allLines, ox, oy) {
     for (let i = 0; i < allLines.length; i++) {
       const points = allLines[i];
       if (points.length < 2) continue;
 
       ctx.beginPath();
       const f = points[0];
-      ctx.moveTo(f.x + f.wave.x, f.y + f.wave.y);
+      ctx.moveTo((f.x + f.wx - ox) * dpr, (f.y + f.wy - oy) * dpr);
 
       for (let j = 1; j < points.length; j++) {
         const p = points[j];
         ctx.lineTo(
-          p.x + p.wave.x + p.cursor.x,
-          p.y + p.wave.y + p.cursor.y
+          (p.x + p.wx + p.cx - ox) * dpr,
+          (p.y + p.wy + p.cy - oy) * dpr
         );
       }
       ctx.stroke();
     }
   }
 
-  function drawToCanvas() {
-    ctx.clearRect(0, 0, cW, cH);
-    if (waveMode === 'none') {
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.88)';
-      ctx.fillRect(0, 0, cW, cH);
-      return;
-    }
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-    ctx.lineWidth = 1;
-    drawLinesToCanvas(vLines);
-    if (waveMode === 'grid') drawLinesToCanvas(hLines);
-  }
-
-  function applyToBackground() {
-    const dataUrl = canvas.toDataURL();
-    clockEl.style.backgroundImage = 'url(' + dataUrl + ')';
-    clockEl.style.backgroundSize = cW + 'px ' + cH + 'px';
-
-    const rect = clockEl.getBoundingClientRect();
-    clockEl.style.backgroundPosition = (-rect.left) + 'px ' + (-rect.top) + 'px';
+  function getClockText() {
+    // get just the time text, not the period span
+    const first = clockEl.childNodes[0];
+    return first ? first.textContent : clockEl.textContent;
   }
 
   function tick(time) {
@@ -257,14 +253,71 @@ function createNoise2D() {
 
     moveAllPoints(vLines, time);
     if (waveMode === 'grid') moveAllPoints(hLines, time);
-    drawToCanvas();
-    applyToBackground();
+
+    // --- draw ---
+    const w = canvas.width;
+    const h = canvas.height;
+
+    ctx.clearRect(0, 0, w, h);
+
+    const scaledFont = fontStr.replace(/(\d+(\.\d+)?)px/, (_, n) => (parseFloat(n) * dpr) + 'px');
+    const textX = 20 * dpr;
+    const textY = 10 * dpr;
+
+    if (waveMode === 'none') {
+      ctx.save();
+      ctx.font = scaledFont;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.88)';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText(getClockText(), textX, textY);
+      ctx.restore();
+      requestAnimationFrame(tick);
+      return;
+    }
+
+    ctx.save();
+
+    const rect = container.getBoundingClientRect();
+    const ox = rect.left - 20;
+    const oy = rect.top - 10;
+
+    // 1) draw waves first (full canvas)
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
+    ctx.lineWidth = 1 * dpr;
+    drawLines(vLines, ox, oy);
+    if (waveMode === 'grid') drawLines(hLines, ox, oy);
+
+    // 2) mask: keep only wave pixels inside the text shape
+    ctx.globalCompositeOperation = 'destination-in';
+    ctx.font = scaledFont;
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(getClockText(), textX, textY);
+
+    // 3) draw the dim text base behind the waves
+    ctx.globalCompositeOperation = 'destination-over';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+    ctx.fillText(getClockText(), textX, textY);
+
+    ctx.restore();
 
     requestAnimationFrame(tick);
   }
 
-  setSize();
-  setLines();
+  function init() {
+    setSize();
+    setLines();
+    requestAnimationFrame(tick);
+  }
+
+  // wait for custom font to load before drawing text
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(init);
+  } else {
+    init();
+  }
 
   window.addEventListener('resize', () => {
     dpr = window.devicePixelRatio || 1;
@@ -283,6 +336,4 @@ function createNoise2D() {
       mouse.set = true;
     }
   });
-
-  requestAnimationFrame(tick);
 })();
