@@ -272,7 +272,7 @@ function createNoise2D() {
       ctx.textBaseline = 'top';
       ctx.fillText(getClockText(), textX, textY);
       ctx.restore();
-      requestAnimationFrame(tick);
+      rafId = requestAnimationFrame(tick);
       return;
     }
 
@@ -303,13 +303,33 @@ function createNoise2D() {
 
     ctx.restore();
 
-    requestAnimationFrame(tick);
+    rafId = requestAnimationFrame(tick);
   }
+
+  let rafId = null;
+
+  function stop() {
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  }
+
+  function start() {
+    if (!rafId) {
+      mouse.lx = mouse.x;
+      mouse.ly = mouse.y;
+      mouse.v = 0;
+      mouse.vs = 0;
+      rafId = requestAnimationFrame(tick);
+    }
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    document.hidden ? stop() : start();
+  });
 
   function init() {
     setSize();
     setLines();
-    requestAnimationFrame(tick);
+    rafId = requestAnimationFrame(tick);
   }
 
   // wait for custom font to load before drawing text
