@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Tab</title>
+  <link rel="stylesheet" href="newtab.css">
+</head>
+<body>
+  <div id="onboarding" class="onboarding">
+    <div class="onboarding-inner">
+      <p class="onboarding-label">what's your name?</p>
+      <input id="onboarding-input" class="onboarding-input" type="text" placeholder="enter your name" autofocus>
+    </div>
+  </div>
+  <main>
+    <p id="greeting" class="greeting"></p>
+    <div id="clock-container" class="clock-container">
+      <h1 id="clock" class="clock"></h1>
+      <div id="waves-bg" class="waves-bg"></div>
+    </div>
+    <p id="date" class="date"></p>
+    <nav id="links" class="links"></nav>
+  </main>
+
+  <div id="editor" class="editor hidden">
+    <div class="editor-header">
+      <span class="editor-title">edit links</span>
+      <button id="editor-close" class="editor-close">&times;</button>
+    </div>
+    <div id="editor-list" class="editor-list"></div>
+    <button id="add-link" class="add-link">+ add link</button>
+    <div class="editor-divider"></div>
+    <div class="editor-setting">
+      <span class="editor-setting-label">wave style</span>
+      <div class="wave-toggle">
+        <button class="wave-mode-btn" data-mode="none">none</button>
+        <button class="wave-mode-btn active" data-mode="vertical">vertical</button>
+        <button class="wave-mode-btn" data-mode="grid">grid</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="history-panel" class="history-panel">
+    <div id="history-list" class="history-list"></div>
+    <div class="history-bar">
+      <button id="history-toggle" class="history-toggle">
+        <img src="icons/clock-fill.svg" class="history-toggle-icon" alt="">
+        <span>recent</span>
+      </button>
+      <div id="history-filters" class="history-filters">
+        <button class="filter-pill active" data-filter="all">all</button>
+        <button class="filter-pill" data-filter="youtube">youtube</button>
+        <button class="filter-pill" data-filter="social">social</button>
+        <button class="filter-pill" data-filter="dev">dev</button>
+        <button class="filter-pill" data-filter="news">news</button>
+      </div>
+    </div>
+  </div>
+
+  <button id="edit-toggle" class="edit-toggle" title="Edit links">
+    <img src="icons/gear-fill.svg" class="edit-icon" alt="">
+  </button>
+
+  <script src="waves.js"></script>
+  <script src="newtab.js"></script>
+</body>
+</html>
