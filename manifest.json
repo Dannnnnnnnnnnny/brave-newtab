@@ -14,7 +14,7 @@
   },
   "permissions": ["storage", "history"],
   "web_accessible_resources": [{
-    "resources": ["icons/*.svg"],
+    "resources": ["icons/*.svg", "backgrounds/*.jpg"],
     "matches": ["<all_urls>"]
   }]
 }

@@ -410,6 +410,40 @@ waveModeBtns.forEach(btn => {
   });
 });
 
+// --- background picker ---
+
+const BG_KEY = 'newtab_bg';
+const bgOptions = document.querySelectorAll('.bg-option');
+const bgWatermark = document.getElementById('bg-watermark');
+const savedBg = localStorage.getItem(BG_KEY) || 'none';
+
+function applyBackground(bg) {
+  while (bgWatermark.firstChild) bgWatermark.removeChild(bgWatermark.firstChild);
+  if (bg === 'none') {
+    bgWatermark.style.opacity = '0';
+    document.body.style.backgroundColor = '#0a0a0a';
+  } else {
+    const img = document.createElement('img');
+    img.src = `backgrounds/${bg}.jpg`;
+    img.alt = '';
+    bgWatermark.appendChild(img);
+    bgWatermark.style.opacity = '';
+    document.body.style.backgroundColor = '#000';
+  }
+}
+
+applyBackground(savedBg);
+
+bgOptions.forEach(btn => {
+  btn.classList.toggle('active', btn.dataset.bg === savedBg);
+  btn.addEventListener('click', () => {
+    bgOptions.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    localStorage.setItem(BG_KEY, btn.dataset.bg);
+    applyBackground(btn.dataset.bg);
+  });
+});
+
 document.addEventListener('click', (e) => {
   if (!editor.classList.contains('hidden') && !editor.contains(e.target) && e.target !== editToggle && !editToggle.contains(e.target)) {
     closeEditor();

@@ -599,6 +599,68 @@ main {
   color: rgba(0, 0, 0, 0.85);
 }
 
+/* --- background picker --- */
+
+.bg-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+
+.bg-option {
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0.5;
+  transition: opacity 200ms;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+.bg-option:hover {
+  opacity: 0.8;
+}
+
+.bg-option.active {
+  opacity: 1;
+  outline-color: rgba(255, 255, 255, 0.4);
+}
+
+.bg-thumb {
+  width: 48px;
+  height: 32px;
+  border-radius: 3px;
+  object-fit: cover;
+  display: block;
+}
+
+.bg-thumb-none {
+  background: #0a0a0a;
+}
+
+/* --- background watermark --- */
+
+.bg-watermark {
+  position: fixed;
+  bottom: 3rem;
+  left: 4rem;
+  width: 20vw;
+  max-width: 320px;
+  opacity: 0.6;
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity 400ms;
+}
+
+.bg-watermark img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
 /* --- icon button in editor row --- */
 
 .editor-icon-btn {
